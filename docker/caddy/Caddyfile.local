@@ -1,0 +1,41 @@
+{
+	# Keep cert management ON (so https://localhost gets an internal cert) but
+	# don't force HTTP->HTTPS, so :80 stays plain HTTP. `auto_https off` would
+	# disable cert issuance too, breaking the internal CA.
+	auto_https disable_redirects
+}
+
+# Routes defined ONCE, imported by both the HTTP and HTTPS blocks below.
+(routes) {
+	handle_path /skilltree* {
+		reverse_proxy skill-tree-backend:8080
+	}
+
+	handle_path /tiny* {
+		reverse_proxy tiny-site-backend:3010
+	}
+
+	handle_path /discord-service* {
+		reverse_proxy discord-service:3050
+	}
+
+	handle_path /todo* {
+		reverse_proxy todo-backend:8000
+	}
+
+	handle {
+		respond "no route" 404
+	}
+}
+
+:80 {
+	import routes
+}
+
+# HTTPS on localhost via Caddy's internal CA — encrypted transport for local
+# testing (curl -k, or trust the CA root from the caddy_data volume). This is
+# NOT the public-ACME path; that's what the sandbox/prod domains exercise.
+https://localhost {
+	tls internal
+	import routes
+}

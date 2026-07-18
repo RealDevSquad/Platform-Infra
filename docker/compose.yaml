@@ -1,0 +1,174 @@
+# Base compose for the RDS services box — every service the machine runs,
+# selectable via profiles. See README.md. Values come from env/ files;
+# ${DOCKERHUB_USER} etc. interpolate from .env (never committed with real values).
+#
+#   COMPOSE_PROFILES=todo docker compose up          # caddy + todo stack
+#   COMPOSE_PROFILES=todo,skilltree docker compose up
+
+name: rds-services
+
+services:
+  caddy:
+    image: caddy:2.7.6-alpine
+    container_name: caddy
+    restart: unless-stopped
+    networks: [rds-production, rds-staging]
+    volumes:
+      - ${CADDYFILE:-./caddy/Caddyfile.local}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  todo-backend:
+    profiles: [todo]
+    image: ${DOCKERHUB_USER:-changeme}/todo-backend:${TODO_TAG:-latest}
+    container_name: todo-backend
+    restart: unless-stopped
+    networks: [rds-production]
+    env_file: [env/todo.env]
+    depends_on:
+      todo-postgres:
+        condition: service_healthy
+      todo-mongo-init:
+        condition: service_completed_successfully
+
+  todo-postgres:
+    profiles: [todo]
+    image: postgres:17.6-alpine
+    container_name: todo-postgres
+    restart: unless-stopped
+    networks: [rds-production]
+    environment:
+      POSTGRES_DB: ${TODO_PG_DB:-todo-app}
+      POSTGRES_USER: ${TODO_PG_USER:-local-user}
+      POSTGRES_PASSWORD: ${TODO_PG_PASSWORD:-local-password}
+    volumes: [todo_pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  todo-mongo:
+    profiles: [todo]
+    image: mongo:7
+    container_name: todo-mongo
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all", "--quiet"]
+    networks: [rds-production]
+    volumes: [todo_mongodata:/data/db]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  todo-mongo-init:
+    profiles: [todo]
+    image: mongo:7
+    depends_on:
+      todo-mongo:
+        condition: service_healthy
+    networks: [rds-production]
+    restart: "no"
+    command: >
+      mongosh --host todo-mongo --eval "
+      try { rs.status() } catch(e) {
+        rs.initiate({_id:'rs0',members:[{_id:0,host:'todo-mongo:27017'}]}) }"
+
+  skill-tree-backend:
+    profiles: [skilltree]
+    image: ${DOCKERHUB_USER:-changeme}/skill-tree-backend:${SKILLTREE_TAG:-latest}
+    container_name: skill-tree-backend
+    restart: unless-stopped
+    networks: [rds-production]
+    env_file: [env/skilltree.env]
+    depends_on:
+      skilltree-mysql:
+        condition: service_healthy
+
+  skilltree-mysql:
+    profiles: [skilltree]
+    image: mysql:8.4
+    container_name: skilltree-mysql
+    restart: unless-stopped
+    networks: [rds-production]
+    environment:
+      MYSQL_DATABASE: ${SKILLTREE_DB:-skilltree}
+      MYSQL_ROOT_PASSWORD: ${SKILLTREE_MYSQL_ROOT_PASSWORD:-local-password}
+    volumes: [skilltree_mysqldata:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  tiny-site-backend:
+    profiles: [tinysite]
+    image: ${DOCKERHUB_USER:-changeme}/tiny-site-backend:${TINYSITE_TAG:-latest}
+    container_name: tiny-site-backend
+    restart: unless-stopped
+    networks: [rds-production]
+    env_file: [env/tinysite.env]
+    depends_on:
+      tinysite-postgres:
+        condition: service_healthy
+
+  tinysite-postgres:
+    profiles: [tinysite]
+    image: postgres:16.3-alpine
+    container_name: tinysite-postgres
+    restart: unless-stopped
+    networks: [rds-production]
+    environment:
+      POSTGRES_DB: ${TINYSITE_PG_DB:-tinysite}
+      POSTGRES_USER: ${TINYSITE_PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${TINYSITE_PG_PASSWORD:-local-password}
+    volumes: [tinysite_pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  discord-service:
+    profiles: [discord]
+    image: ${DOCKERHUB_USER:-changeme}/discord-service:${DISCORD_TAG:-latest}
+    container_name: discord-service
+    restart: unless-stopped
+    networks: [rds-production]
+    env_file: [env/discord.env]
+    depends_on: [rabbitmq]
+
+  discord-message-broker:
+    profiles: [discord]
+    image: ${DOCKERHUB_USER:-changeme}/discord-message-broker:${BROKER_TAG:-latest}
+    container_name: discord-message-broker
+    restart: unless-stopped
+    networks: [rds-production]
+    env_file: [env/discord.env]
+    depends_on: [rabbitmq, discord-service]
+
+  rabbitmq:
+    profiles: [discord]
+    image: rabbitmq:4.0.5-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    networks: [rds-production]
+    volumes: [rabbitmq_data:/var/lib/rabbitmq/mnesia]
+
+networks:
+  rds-production:
+    name: rds-production
+  rds-staging:
+    name: rds-staging
+
+volumes:
+  caddy_data:
+  caddy_config:
+  todo_pgdata:
+  todo_mongodata:
+  skilltree_mysqldata:
+  tinysite_pgdata:
+  rabbitmq_data:

@@ -1,0 +1,9 @@
+# Local overlay: publish caddy on localhost, nothing else changes.
+#   docker compose -f compose.yml -f compose.local.yml --profile todo up
+# (or set COMPOSE_FILE=compose.yml:compose.local.yml once in .env)
+
+services:
+  caddy:
+    ports:
+      - "${LOCAL_HTTP_PORT:-80}:80"
+      - "${LOCAL_HTTPS_PORT:-443}:443"
