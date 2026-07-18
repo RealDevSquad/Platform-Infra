@@ -1,0 +1,13 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4.0.5-alpine
+    container_name: rabbitmq-production
+    restart: unless-stopped
+    networks:
+      - rds-production
+    volumes:
+      - ./data:/var/lib/rabbitmq/mnesia/
+
+networks:
+  rds-production:
+    external: true

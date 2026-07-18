@@ -1,0 +1,31 @@
+name: caddy-reverse-proxy
+
+services:
+  caddy: 
+    image: caddy:2.7.6-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    networks:
+      - rds-staging
+      - rds-production  
+    volumes:
+      - $PWD/Caddyfile:/etc/caddy/Caddyfile
+      - $PWD/site:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  rds-staging:
+    name: rds-staging
+    external: true
+  rds-production:
+    name: rds-production
+    external: true

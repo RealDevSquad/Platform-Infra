@@ -1,0 +1,13 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4.0.5-alpine
+    container_name: rabbitmq-staging
+    restart: unless-stopped
+    networks:
+      - rds-staging
+    volumes:
+      - ./data:/var/lib/rabbitmq/mnesia/
+
+networks:
+  rds-staging:
+    external: true
