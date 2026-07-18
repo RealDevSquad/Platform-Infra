@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Nothing here is secret,
+# but terraform.tfvars is not committed by convention (holds your specifics).
+aws_region = "ap-south-1"
+env_name   = "sandbox"
+subdomain  = "sandbox.yourdomain.com" # a subdomain YOU own; you'll create its DNS A record after apply
+# admin_cidr     = "203.0.113.4/32"   # your IP for SSH; omit to rely on Session Manager
+# ssh_public_key = "ssh-ed25519 AAAA..."  # optional; empty = keyless (SSM) only
+# instance_type  = "t4g.medium"
