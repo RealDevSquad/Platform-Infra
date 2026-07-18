@@ -1,0 +1,7 @@
+# Installed to /etc/cron.d/docker-prune. Versioned in the Infra repo —
+# edit here, re-deploy; never hand-edit on the box. Weekly, Sunday 03:20 UTC.
+# Field order in /etc/cron.d differs from a user crontab: it includes the user.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+20 3 * * 0 ubuntu /home/ubuntu/host/docker-prune.sh >> /home/ubuntu/host/docker-prune.log 2>&1

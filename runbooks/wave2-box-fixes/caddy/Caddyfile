@@ -1,0 +1,42 @@
+services.realdevsquad.com {
+
+	handle_path /skilltree* {
+		reverse_proxy skill-tree-backend-production:8080
+	}
+
+	handle_path /staging-skilltree* {
+		reverse_proxy skill-tree-backend-staging:8080
+	}
+
+	handle_path /tiny* {
+		reverse_proxy tiny-site-backend-production:3010
+	}
+
+	handle_path /staging-tiny* {
+		reverse_proxy tiny-site-backend-staging:4010
+	}
+
+	handle_path /discord-service* {
+		reverse_proxy discord-service-production:3050
+	}
+
+	handle_path /staging-discord-service* {
+		reverse_proxy discord-service-staging:4050
+	}
+
+	handle_path /staging-todo* {
+		reverse_proxy todo-backend-staging:8000
+	}
+
+	handle_path /todo* {
+		reverse_proxy todo-backend-production:8000
+	}
+
+	handle_path / {
+		respond "Hello world!!"
+	}
+
+	handle {
+		respond "not found" 404
+	}
+}
