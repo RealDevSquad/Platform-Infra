@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Pre-commit guard: refuse commits while identifiers/ticket refs are present
+# in committable files. Scan-only — mutates nothing. Activate per-clone with:
+#   git config core.hooksPath scripts/hooks
+exec "$(git rev-parse --show-toplevel)/scripts/sanitize.sh" --check
