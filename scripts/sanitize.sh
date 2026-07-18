@@ -25,7 +25,7 @@ if [ ! -f "$VALUES" ]; then
   fi
 fi
 
-FILES=$(find "$REPO_ROOT" -type f \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.sh" -o -name "*.conf" -o -name "*.tf" -o -name "*.example" -o -name "Caddyfile*" \) ! -path "*/.git/*" ! -path "*/.terraform/*" ! -name "sanitize.sh")
+FILES=$(find "$REPO_ROOT" -type f \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.sh" -o -name "*.conf" -o -name "*.tf" -o -name "*.example" -o -name "Makefile" -o -name "Caddyfile*" \) ! -path "*/.git/*" ! -path "*/.terraform/*" ! -name "sanitize.sh")
 
 # Process longest values first so a value that is a substring of another
 # (e.g. KEY_PAIR_NAME=rds-services-server vs a hypothetical rds-services) is
@@ -69,7 +69,7 @@ if [ "$MODE" != "restore" ]; then
   # part (b) is generic AWS-identifier shapes only. Output is filenames, never
   # the matched value.
   echo "Residue scan (should print nothing):"
-  SCAN_INCLUDES=(--include="*.md" --include="*.yml" --include="*.yaml" --include="*.sh" --include="*.conf" --include="*.tf" --include="*.example" --include="*.cron" --include="Caddyfile*")
+  SCAN_INCLUDES=(--include="*.md" --include="*.yml" --include="*.yaml" --include="*.sh" --include="*.conf" --include="*.tf" --include="*.example" --include="*.cron" --include="Makefile" --include="Caddyfile*")
   bad=0
   if [ -n "$VALUES" ]; then
     while IFS='=' read -r key value; do

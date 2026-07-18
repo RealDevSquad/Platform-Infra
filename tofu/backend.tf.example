@@ -1,0 +1,10 @@
+# Remote-state adoption (docs/remote-state.md). To adopt:
+#   cp backend.tf.example backend.tf      # backend.tf is gitignored
+#   make init MODULE=tofu                 # from the repo root
+# Bucket/key/region are injected by `make init` — discovered from the account
+# via SSM /rds/tofu/state-bucket, never hardcoded. Lockfile needs tofu >= 1.10.
+terraform {
+  backend "s3" {
+    use_lockfile = true
+  }
+}

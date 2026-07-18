@@ -11,6 +11,8 @@ docker/env/*.env
 **/terraform.tfvars
 *.tfstate*
 *.tfplan
+# live remote-state adoption marker (the committed contract is backend.tf.example)
+**/backend.tf
 
 # Private scratch, if ever created in-repo
 private/

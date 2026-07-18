@@ -41,6 +41,15 @@ boots.
 key with a safe dummy default, are committed, and are what `docker compose config`
 validates against. `docs/secrets.md` is the human index of the same keys.
 
+## Mode is declared, not guessed
+
+`docker/.env` carries **`ENV_PROVIDER=manual|ssm`** — the machine states its
+mode in config. The ssm provider (`render-env.sh`) hard-refuses (exit 2,
+changes nothing) unless the machine declares `ssm`; `bootstrap.sh` likewise
+refuses to run off-EC2 (no metadata service → stop, with a pointer to the
+local flow). So the AWS path *fails at the front door* on a laptop instead of
+half-working, and the local path contains no code that can reach AWS at all.
+
 ## `scripts/render-env.sh` (the SSM provider) — contract
 
 - Input: an environment name (`production`/`staging`) + the SSM path root.

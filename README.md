@@ -28,6 +28,7 @@ internally and happens only as its own explicitly approved change, never as a si
 | `docker/` | **The one way to bring machines up** — single Compose project: base (Caddy) + per-service profiles, `compose.local.yaml` (laptop) and `compose.prod.yaml` (server) overlays. Both proven 2026-07-18 |
 | `tofu/` | **The box module — where we want to be**: every box (sandbox now, prod successor later) is *created* from here (instance, SG, IAM+SSM, EIP, backup bucket) |
 | `tofu-prod-import/` | **Temporary, will be deleted**: a one-to-one imported copy of the prod box exactly as it exists today (`tofu plan` clean, 30 resources). Gone once `tofu/` has replaced that box |
+| `tofu-state-bootstrap/` | Once per account: creates the remote-state bucket (`rds-tofu-state-<random>`) + its SSM discovery pointer — `make state-bootstrap`, then `make init MODULE=…` (`docs/remote-state.md`) |
 | `scripts/` | `bootstrap.sh` (fresh-box provisioner), `sanitize.sh` (anonymize/restore) |
 | `docs/new-box-bootstrap.md` | The 1-2-3 rebuild: launch → `bootstrap.sh` → verify → DNS cutover. Legacy box never touched |
 | `mirror/` | Verbatim as-is snapshots of the hand-built legacy box — **reference only, never a bring-up path**; see `mirror/README.md` |
@@ -66,6 +67,7 @@ internally and happens only as its own explicitly approved change, never as a si
 - [x] Config model designed local-first (`docs/config-model.md`): env file = contract, providers pluggable, SSM server-only
 - [x] `scripts/render-env.sh` reviewed + repaired: truncated main + f-string syntax fixed; offline-fallback contract tested 2026-07-18
 - [x] **Sandbox account stand-up DONE** (2026-07-18): fresh account → `tofu apply` (9 resources) → repo via S3-presign bounce → `bootstrap.sh` ×2 → 7 containers (todo+discord profiles, t4g.small + swap) → real ACME cert behind Cloudflare (orange, Full strict) → `/todo/api/schema` 200 over public TLS. Full-chain proof of the repo thesis
+- [x] Remote state + mode separation: account-discovered state bucket (`tofu-state-bootstrap/` + `make init`), `backend.tf.example` adoption, `ENV_PROVIDER` gate, EC2-only bootstrap gate — per-account adoption pending (`docs/remote-state.md`)
 - [ ] `tofu/ssm.tf` parameter tree from `docs/secrets.md` (config-model phase 3)
 - [ ] Throwaway-EC2 end-to-end bootstrap test (largely covered by the sandbox stand-up)
 - [ ] Cloudflare DNS export (user-side; also feeds tofu DNS + cutover docs)

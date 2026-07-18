@@ -25,6 +25,17 @@ ENV_DIR="$REPO_ROOT/docker/env"
 SERVICES=(todo skilltree tinysite discord)
 PATH_ROOT="/rds/$ENV_NAME"
 
+# Mode gate (docs/config-model.md): the ssm provider must be DECLARED. A
+# machine whose docker/.env does not say ENV_PROVIDER=ssm is a local/manual
+# machine — refuse loudly, change nothing. (Reachability problems on a
+# declared-ssm box are handled separately by the outage-safe fallback below.)
+DECLARED=$(grep -E '^ENV_PROVIDER=' "$REPO_ROOT/docker/.env" 2>/dev/null | tail -1 | cut -d= -f2 || true)
+if [ "$DECLARED" != "ssm" ]; then
+  echo "ERROR: ENV_PROVIDER is '${DECLARED:-unset}' in docker/.env — this machine is not declared for the ssm provider." >&2
+  echo "Local flow: cp docker/env/<svc>.env.example docker/env/<svc>.env, then 'make up'. Nothing was changed." >&2
+  exit 2
+fi
+
 fetch() { # fetch <ssm-path> <outfile>  — writes KEY=VALUE lines, never echoes values
   # (review fix) parser rewritten: the as-found f-string used backslash-escaped
   # quotes inside the {expr}, illegal in Python <=3.11 -> SyntaxError on every

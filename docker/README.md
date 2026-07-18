@@ -11,6 +11,7 @@ cp env/todo.env.example env/todo.env        # repeat per profile you enable
 cat > .env <<'EOF'
 DOCKERHUB_USER=<the docker hub namespace images are pushed to>
 COMPOSE_FILE=compose.yaml:compose.local.yaml
+ENV_PROVIDER=manual
 EOF
 COMPOSE_PROFILES=todo docker compose up -d
 curl -s localhost/todo/api/schema | head -3     # acceptance check
@@ -42,6 +43,10 @@ prod TLS; the *public-issuance* (ACME) half is what the sandbox subdomain tests.
 - **Caddy is the always-on base**; the local overlay publishes only `:80` and mounts
   `caddy/Caddyfile.local` (same `handle_path` routes as prod, upstreams by compose
   service name, `auto_https off`, explicit 404 fallthrough).
+- **Mode is declared, not guessed**: `ENV_PROVIDER=manual|ssm` in `.env`. The
+  AWS-side tooling (`render-env.sh`) hard-refuses unless a machine declares
+  `ssm`, and `bootstrap.sh` refuses off-EC2 — a laptop can never half-run the
+  AWS path by accident (`docs/config-model.md`).
 - **Container names are the service-discovery contract** (Caddy dials
   `todo-backend:8000` etc.), mirroring how prod works today with `-production`/
   `-staging` suffixed names.

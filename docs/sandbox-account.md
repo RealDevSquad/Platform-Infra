@@ -66,6 +66,7 @@ cd ~/Infra && ./scripts/bootstrap.sh
 #       COMPOSE_FILE=compose.yaml:compose.prod.yaml
 #       SITE_ADDRESS=sandbox.yourdomain.com
 #       COMPOSE_PROFILES=todo,skilltree,tinysite,discord
+#       ENV_PROVIDER=manual
 # re-run bootstrap.sh — it validates + brings the stack up.
 ```
 

@@ -12,6 +12,26 @@ cd "$REPO_ROOT/docker"
 
 step() { echo; echo "==> $1"; }
 
+# Gate: this provisions an EC2 box. Refuse anywhere else (laptops!) so the
+# local flow and the box flow can never be mixed. Non-AWS server escape
+# hatch: BOOTSTRAP_FORCE=1.
+if [ "${BOOTSTRAP_FORCE:-}" != "1" ]; then
+  TOK=$(curl -s -m 2 -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)
+  IID=$(curl -s -m 2 -H "X-aws-ec2-metadata-token: $TOK" \
+    http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true)
+  case "$IID" in
+    i-*) : ;; # on EC2 — proceed
+    *)
+      echo "STOP: no EC2 metadata service — this is not an EC2 instance."
+      echo "bootstrap.sh provisions a fresh box. On a laptop use the local flow:"
+      echo "  docker/README.md quickstart (cp env examples, then 'make up')."
+      echo "Provisioning a non-AWS server on purpose? Re-run with BOOTSTRAP_FORCE=1."
+      exit 3
+      ;;
+  esac
+fi
+
 step "1/6 Swap (2G) — headroom for JVM + MySQL, essential on small instances"
 if ! swapon --show --noheadings | grep -q swapfile; then
   sudo fallocate -l 2G /swapfile
@@ -64,6 +84,7 @@ if [ ! -f .env ]; then
 DOCKERHUB_USER=CHANGEME
 COMPOSE_FILE=compose.yaml:compose.prod.yaml
 COMPOSE_PROFILES=todo,skilltree,tinysite,discord
+ENV_PROVIDER=manual
 EOF
   chmod 600 .env
   echo "    created .env — set DOCKERHUB_USER"

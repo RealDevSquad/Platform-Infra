@@ -13,9 +13,10 @@ terraform {
     # ^ enable when the zone export lands
   }
 
-  # State backend: S3 in the RDS account + state encryption — configure at
-  # first `tofu init` during the import loop. Until then: local state,
-  # which must never be committed (contains real IDs after import).
+  # State backend: adopt remote state (account-discovered bucket) via
+  #   cp backend.tf.example backend.tf && make init MODULE=tofu-prod-import
+  # — see ../docs/remote-state.md. Until adopted: local state, which must
+  # never be committed (contains real IDs after import).
 }
 
 provider "aws" {
