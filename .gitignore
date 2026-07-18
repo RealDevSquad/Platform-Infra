@@ -1,0 +1,19 @@
+# Machine-local state, secrets, and identifiers — never in history.
+# The anonymization mapping lives OUTSIDE this repo (../.infra-private/).
+
+# Live env files (the committed *.env.example templates are the contract)
+docker/.env
+docker/env/*.env
+!docker/env/*.env.example
+
+# OpenTofu machine-local artifacts (state holds real AWS identifiers)
+**/.terraform/
+**/terraform.tfvars
+*.tfstate*
+*.tfplan
+
+# Private scratch, if ever created in-repo
+private/
+
+# OS noise
+.DS_Store
