@@ -1,0 +1,20 @@
+# Production overlay: run on a real server with a real domain.
+#   COMPOSE_FILE=compose.yaml:compose.prod.yaml   (set in .env on the server)
+# Differences from local: caddy publishes 80/443 (+443/udp for HTTP/3) and
+# serves caddy/Caddyfile.prod (real domain, automatic HTTPS via ACME).
+# Everything else — services, DBs, healthchecks, restart policies — is the
+# same base definition that runs locally. That sameness is the point.
+
+services:
+  caddy:
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      # prod: unset → services.realdevsquad.com; sandbox: set in docker/.env
+      SITE_ADDRESS: ${SITE_ADDRESS:-services.realdevsquad.com}
+    volumes:
+      - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config

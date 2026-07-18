@@ -1,0 +1,32 @@
+{
+	# Automatic HTTPS is ON (default): Caddy obtains/renews certs via ACME.
+	# Precondition: the site hostname's DNS A record points at this box
+	# (grey-cloud/DNS-only), ports 80+443 reachable. Before DNS cutover,
+	# rehearse with a temporary hostname — see docs/new-box-bootstrap.md.
+}
+
+# Site address is env-parameterized: prod leaves SITE_ADDRESS unset and gets
+# services.realdevsquad.com; the sandbox sets SITE_ADDRESS=sandbox.yourdomain.com.
+# Same file, any domain — Caddy fetches a real cert for whatever this resolves to.
+{$SITE_ADDRESS:services.realdevsquad.com} {
+
+	handle_path /skilltree* {
+		reverse_proxy skill-tree-backend:8080
+	}
+
+	handle_path /tiny* {
+		reverse_proxy tiny-site-backend:3010
+	}
+
+	handle_path /discord-service* {
+		reverse_proxy discord-service:3050
+	}
+
+	handle_path /todo* {
+		reverse_proxy todo-backend:8000
+	}
+
+	handle {
+		respond "not found" 404
+	}
+}
